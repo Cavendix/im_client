@@ -18,10 +18,13 @@ public:
     QString getAccount();
     //注册
     void createAccount(QString Account, QString Secret);
+    //发送信息
+    void sendnews(QString);
 
 signals:
     void connectOK();
     void connectError();
+    void resultReady(int result); // 定义一个信号，用于传递结果
 private:
     QTcpSocket*m_tcp;
     unsigned short port=8989;

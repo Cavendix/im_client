@@ -3,7 +3,7 @@
 
 #include <QMainWindow>
 #include <QString>
-#include"socket.h"
+
 
 namespace Ui {
 class login;
@@ -28,8 +28,8 @@ private slots:
 
 private:
     Ui::login *ui;
-    Socket *worker;
     QString Account;
+    int k=0;//判断网络是否连接的标准
 };
 
 #endif // LOGIN_H

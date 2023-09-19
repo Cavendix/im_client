@@ -27,5 +27,6 @@ private slots:
 private:
     Ui::MainWindow *ui;
     int k=0;//判断网络是否连接的标准
+    int i;
 };
 #endif // MAINWINDOW_H

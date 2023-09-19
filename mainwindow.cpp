@@ -4,6 +4,9 @@
 #include"login.h"
 #include<QThread>
 #include<QMessageBox>
+#include"home.h"
+#include<windows.h>
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -47,13 +50,17 @@ MainWindow::MainWindow(QWidget *parent)
         k=0;
         //ui->login_2->setEnabled(true);
     });
+
+    connect(worker,&Socket::resultReady, [this](int result) {
+        qDebug() << "Result received in main:" << result;
+        i=result;
+    });
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
 }
-
 
 void MainWindow::on_signup_2_clicked()//登录按钮
 {
@@ -70,11 +77,19 @@ void MainWindow::on_signup_2_clicked()//登录按钮
     }
     else if(k==0){
         QMessageBox::warning(this,"登录","服务器未连接");
-        startConnect();
+        emit startConnect();
     }
     else{
         emit sendAccount(account,secret);
+        qDebug()<<i;
+        if(i==2)QMessageBox::warning(this,"登录","查无此账号");
+        else if(i==0)QMessageBox::warning(this,"登录","密码错误");
+        else {
+            home* v=new home;
+            v->show();
+            this->close();
         }
+    }
 }
 
 
@@ -82,11 +97,13 @@ void MainWindow::on_login_2_clicked()
 {
     if(k==0){
     QMessageBox::warning(this,"登录","服务器未连接");
-    startConnect();
+    emit startConnect();
     }
     else{
         login* point=new login;
         point->show();
     }
 }
+
+
 

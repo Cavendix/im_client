@@ -15,7 +15,7 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 signals:
-    void sendAccount(QString,QString);//发送账号密码给子线程的信号
+    void signup(QString);//发送账号密码给子线程的信号
 
     void startConnect();//发送ip端口给子线程的信号
 
@@ -26,7 +26,7 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-    int k=0;//判断网络是否连接的标准
     int i;
+    int k;
 };
 #endif // MAINWINDOW_H

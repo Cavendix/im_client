@@ -1,19 +1,22 @@
 #ifndef SOCKET_H
 #define SOCKET_H
 
-#include <QObject>
+#include<QObject>
 #include<QTcpServer>
+#include<QThread>
 
 class Socket : public QObject
 {
     Q_OBJECT
 public:
-    explicit Socket(QObject *parent = nullptr);
+    static Socket* instance();
+
+public slots:
 
     //连接服务器
     void connectServer();
     //登录
-    void sendAccount(QString ,QString);
+    void signup(QString);
     //从服务器获取随机账号
     QString getAccount();
     //注册
@@ -22,13 +25,14 @@ public:
     void sendnews(QString);
 
 signals:
+    void connectStart();
     void connectOK();
     void connectError();
     void resultReady(int result); // 定义一个信号，用于传递结果
 private:
+    explicit Socket(QObject *parent = nullptr);
+
     QTcpSocket*m_tcp;
-    unsigned short port=8989;
-    QString ip="192.168.5.184";
 };
 
 #endif // SOCKET_H

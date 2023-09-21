@@ -2,11 +2,13 @@
 #include "ui_mainwindow.h"
 #include"socket.h"
 #include"login.h"
-#include<QThread>
 #include<QMessageBox>
 #include"home.h"
 #include<windows.h>
-
+#include <QCoreApplication>
+#include <QJsonArray>
+#include <QJsonObject>
+#include <QJsonDocument>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -20,38 +22,26 @@ MainWindow::MainWindow(QWidget *parent)
     ui->statusbar->addWidget(new QLabel("网络状态:"));
     m_status->setPixmap(QPixmap(":/picture/F.png").scaled(20,20));
     ui->statusbar->addWidget(m_status);
+    k=0;
+    // 获取 Socket单例对象
+    Socket* worker = Socket::instance();
 
-    //创建线程对象(不指定父对象，要自己析构)
-    QThread* t= new QThread;
-
-    t->start();//启动子线程
-
-    //创建任务对象
-    Socket *worker= new Socket;
-
-    //工作对象移动至子线程
-    worker->moveToThread(t);
-
-    connect(this,&MainWindow::sendAccount,worker,&Socket::sendAccount);
-    connect(this,&MainWindow::startConnect,worker,&Socket::connectServer);
     //处理子线程发送的信号
-    connect(worker,&Socket::connectOK,this,[=](){
+    QObject::connect(worker,&Socket::connectOK,this,[=](){
         m_status->setPixmap(QPixmap(":/picture/T.png").scaled(20, 20));
         k=1;
 
     });
-    connect(worker, &Socket::connectError, this, [=]() {
-        t->quit();//资源释放
-        t->wait();
+    QObject::connect(worker, &Socket::connectError, this, [=]() {
         worker->deleteLater();
-        t->deleteLater();
-
         m_status->setPixmap(QPixmap(":/picture/F.png").scaled(20, 20));
         k=0;
-        //ui->login_2->setEnabled(true);
     });
 
-    connect(worker,&Socket::resultReady, [this](int result) {
+    QObject::connect(this,&MainWindow::signup,worker,&Socket::signup);
+    QObject::connect(this,&MainWindow::startConnect,worker,&Socket::connectServer);
+
+    QObject::connect(worker,&Socket::resultReady, [this](int result) {
         qDebug() << "Result received in main:" << result;
         i=result;
     });
@@ -62,11 +52,33 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+QString json(QString account,QString secret){
+    // 创建一个JSON数组
+    QJsonArray jsonArray;
+
+    // 创建一个JSON对象，包含 "signup"、Account 和 Secret
+    QJsonObject jsonObject;
+    jsonObject["action"] = "signup";
+    jsonObject["Account"] = account; // 替换为实际的账号值
+    jsonObject["Secret"] = secret;   // 替换为实际的密钥值
+
+    // 将JSON对象添加到数组中
+    jsonArray.append(jsonObject);
+
+    // 创建一个JSON文档并将数组转换为字符串
+    QJsonDocument jsonDoc(jsonArray);
+    QString jsonString = jsonDoc.toJson(QJsonDocument::Compact);
+
+    qDebug() << "JSON字符串:" << jsonString;
+    return jsonString;
+}
+
 void MainWindow::on_signup_2_clicked()//登录按钮
 {
-
     QString account=ui->account_2->text();
     QString secret=ui->secret_2->text();
+
+
     if(account.isEmpty()){
         QMessageBox::warning(this,"登录","账号不能为空");
         return;
@@ -80,7 +92,8 @@ void MainWindow::on_signup_2_clicked()//登录按钮
         emit startConnect();
     }
     else{
-        emit sendAccount(account,secret);
+        QString jsonString=json(account,secret);
+        emit signup(jsonString);
         qDebug()<<i;
         if(i==2)QMessageBox::warning(this,"登录","查无此账号");
         else if(i==0)QMessageBox::warning(this,"登录","密码错误");
@@ -91,7 +104,6 @@ void MainWindow::on_signup_2_clicked()//登录按钮
         }
     }
 }
-
 
 void MainWindow::on_login_2_clicked()
 {
